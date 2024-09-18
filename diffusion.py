@@ -20,6 +20,9 @@ import utils
 
 LOG2 = math.log(2)
 
+from transformers import LlamaForCausalLM, LlamaTokenizer
+from llama_mdlm import LlamaForMLM
+
 
 def _sample_categorical(categorical_probs):
   gumbel_norm = (
@@ -105,6 +108,16 @@ class Diffusion(L.LightningModule):
     elif self.config.backbone == 'hf_dit':
       self.backbone = transformers.AutoModelForMaskedLM.from_pretrained(
         config.eval.checkpoint_path, trust_remote_code=True)
+     
+      # LLAMA_TOKEN = os.environ.get('LLAMA_TOKEN') 
+      # self.backbone = LlamaForMLM.from_pretrained(
+      #   "meta-llama/Meta-Llama-3-8B", trust_remote_code=True, token=LLAMA_TOKEN
+      # )
+      # # convert to fp16
+      # self.backbone = self.backbone.half()
+      # self.tokenizer = LlamaTokenizer.from_pretrained(
+      #   "meta-llama/Meta-Llama-3-8B", trust_remote_code=True, token=LLAMA_TOKEN
+      # )
     else:
       raise ValueError(
         f'Unknown backbone: {self.config.backbone}')
@@ -314,6 +327,7 @@ class Diffusion(L.LightningModule):
     sigma = self._process_sigma(sigma)
     with torch.cuda.amp.autocast(dtype=torch.float32):
       logits = self.backbone(x, sigma)
+
     
     if self.parameterization == 'subs':
       return self._subs_parameterization(logits=logits,

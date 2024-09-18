@@ -20,6 +20,18 @@ import utils
 
 LOGGER = utils.get_logger(__name__)
 
+class ZachDataset(torch.utils.data.Dataset):
+  def __init__(self, dataset, length):
+    self.data = dataset[0]
+    self.len = length
+
+  def __len__(self):
+    return self.len
+
+  def __getitem__(self, idx):
+    del idx
+    return self.data
+
 
 def wt_detokenizer(string):
   # contractions
@@ -571,7 +583,7 @@ def get_dataloaders(config, tokenizer, skip_train=False,
     train_loader = None
   else:
     train_loader = torch.utils.data.DataLoader(
-      train_set,
+      ZachDataset(train_set, len(train_set)),
       batch_size=config.loader.batch_size,
       num_workers=config.loader.num_workers,
       pin_memory=config.loader.pin_memory,
@@ -588,7 +600,7 @@ def get_dataloaders(config, tokenizer, skip_train=False,
       shuffle_valid = True
       generator = torch.Generator().manual_seed(valid_seed)
     valid_loader = torch.utils.data.DataLoader(
-      valid_set,
+      ZachDataset(train_set, len(valid_set)), # also use train_set for valid_set
       batch_size=config.loader.eval_batch_size,
       num_workers=config.loader.num_workers,
       pin_memory=config.loader.pin_memory,
